@@ -5,12 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>LC Hub – Zentrale Moderation</title>
 <style>
-  :root {
-    --bg:#0b0f1a; --panel:#12172a; --panel2:#0e1324; --fg:#eef1ff; --muted:#a6aed6;
-    --accent:#7aa2ff; --accent2:#5de5b1; --border:#242b4a; --danger:#ff6b6b;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
+  :root { --bg:#0b0f1a; --panel:#12172a; --panel2:#0e1324; --fg:#eef1ff; --muted:#a6aed6; --accent:#7aa2ff; --accent2:#5de5b1; --border:#242b4a; }
+  *{box-sizing:border-box} html,body{height:100%}
   body{margin:0;background:
     radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
     radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),
@@ -19,13 +15,10 @@
   .shell{height:100%;display:grid;grid-template-rows:56px 1fr}
   .top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);backdrop-filter: blur(6px)}
   .badge{background:#1b2241;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted)}
-  .dot{width:10px;height:10px;border-radius:50%;background:#6b7280}
-  .dot.ok{background:#42d392}
-  .flex{flex:1}
-  .tog{display:flex;align-items:center;gap:10px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#6b7280}.dot.ok{background:#42d392}
+  .flex{flex:1}.tog{display:flex;align-items:center;gap:10px;color:var(--muted)}
   .app{display:grid;grid-template-columns:290px 1fr 300px;gap:12px;padding:12px;height:calc(100vh - 56px)}
   .col{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:auto;box-shadow:0 6px 20px rgba(0,0,0,.35)}
-  /* Queue */
   .qhead{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
   .queue{padding:10px}
   .item{padding:10px 12px;border-radius:12px;margin:8px 0;background:var(--panel2);border:1px solid transparent;cursor:pointer}
@@ -34,31 +27,25 @@
   .avatar{width:26px;height:26px;border-radius:50%;background:#202a55;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent2)}
   .meta{margin-left:auto;color:var(--muted);font-size:12px}
   .preview{margin-top:6px;color:#dfe4ff}
-  .unread{margin-left:6px; background:#213169;color:#cfe0ff;border:1px solid #2a3a73;border-radius:10px;padding:1px 6px;font-size:11px}
-  /* Chat */
+  .unread{margin-left:6px;background:#213169;color:#cfe0ff;border:1px solid #2a3a73;border-radius:10px;padding:1px 6px;font-size:11px}
   .chat{display:grid;grid-template-rows:48px 1fr 72px}
   .chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
   .origin{color:var(--muted);font-size:12px}
   .chatbody{padding:16px;overflow:auto}
   .bub{max-width:72%;padding:10px 12px;border-radius:14px;margin:6px 0;word-wrap:break-word;white-space:pre-wrap}
-  .them{margin-right:auto;background:#1a1f3a}
-  .me{margin-left:auto;background:#23315b}
+  .them{margin-right:auto;background:#1a1f3a}.me{margin-left:auto;background:#23315b}
   .cinp{display:flex;gap:10px;align-items:center;padding:12px;border-top:1px solid var(--border)}
   textarea{flex:1;min-height:52px;max-height:160px;padding:12px;border-radius:12px;border:1px solid #2a3156;background:#0f1428;color:var(--fg);resize:vertical}
   button{background:var(--accent);color:#0b1022;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-  /* Right */
-  .rpad{padding:12px}
-  .card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px 0}
-  .rrow{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed #2a3156}
-  .muted{color:var(--muted)}
+  .rpad{padding:12px}.card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px 0}
+  .rrow{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed #2a3156}.muted{color:var(--muted)}
   .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a254f;color:#aeb8eb;margin-right:6px}
 </style>
 </head>
 <body>
 <div class="shell">
   <div class="top">
-    <div id="dot" class="dot"></div>
-    <strong>LC Hub</strong>
+    <div id="dot" class="dot"></div><strong>LC Hub</strong>
     <span id="con" class="badge">Verbindungen: 0</span>
     <span id="unreadAll" class="badge">Ungelesen: 0</span>
     <div class="flex"></div>
@@ -67,28 +54,13 @@
       <label><input type="checkbox" id="soundOn" checked> Sound</label>
     </div>
   </div>
-
   <div class="app">
-    <!-- Queue -->
-    <div class="col">
-      <div class="qhead"><strong>Eingang</strong></div>
-      <div id="queue" class="queue"></div>
-    </div>
-
-    <!-- Chat -->
+    <div class="col"><div class="qhead"><strong>Eingang</strong></div><div id="queue" class="queue"></div></div>
     <div class="col chat">
-      <div class="chead">
-        <strong id="title">–</strong>
-        <span id="origin" class="origin"></span>
-      </div>
+      <div class="chead"><strong id="title">–</strong><span id="origin" class="origin"></span></div>
       <div id="chat" class="chatbody"></div>
-      <div class="cinp">
-        <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
-        <button id="send">Senden</button>
-      </div>
+      <div class="cinp"><textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea><button id="send">Senden</button></div>
     </div>
-
-    <!-- Right -->
     <div class="col rpad">
       <div class="card"><strong>Details</strong>
         <div class="rrow"><div>Profil</div><div id="d_prof" class="muted">–</div></div>
@@ -96,133 +68,99 @@
         <div class="rrow"><div>Thread-ID</div><div id="d_tid" class="muted">–</div></div>
         <div class="rrow"><div>Quelle</div><div id="d_src" class="muted">–</div></div>
       </div>
-      <div class="card"><strong>Shortcuts</strong>
-        <div class="pill">Enter: senden</div><div class="pill">Shift+Enter: Zeile</div>
-      </div>
+      <div class="card"><strong>Shortcuts</strong><div class="pill">Enter: senden</div><div class="pill">Shift+Enter: Zeile</div></div>
     </div>
   </div>
 </div>
-
 <script>
-/* ====== STATE ====== */
-const store = {
-  threads: new Map(), // id -> {threadId, profile, customer, sourceId, lastAt, unread, messages:[]}
-  sources: new Map(), // sourceId -> window
-  selected: null,
-  unreadAll: 0
-};
-const el = {
-  queue: qs('#queue'), chat: qs('#chat'), title: qs('#title'), origin: qs('#origin'),
-  reply: qs('#reply'), send: qs('#send'),
-  d_prof: qs('#d_prof'), d_cust: qs('#d_cust'), d_tid: qs('#d_tid'), d_src: qs('#d_src'),
-  con: qs('#con'), dot: qs('#dot'), unreadAll: qs('#unreadAll'),
-  autoNext: qs('#autoNext'), soundOn: qs('#soundOn')
-};
-function qs(s, r=document){return r.querySelector(s)}
-function fmt(t){return new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0};
+const el={queue:q('#queue'),chat:q('#chat'),title:q('#title'),origin:q('#origin'),reply:q('#reply'),send:q('#send'),
+          d_prof:q('#d_prof'),d_cust:q('#d_cust'),d_tid:q('#d_tid'),d_src:q('#d_src'),
+          con:q('#con'),dot:q('#dot'),unreadAll:q('#unreadAll'),autoNext:q('#autoNext'),soundOn:q('#soundOn')};
+function q(s,r=document){return r.querySelector(s)};function fmt(t){return new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+function norm(t){return (t||'').replace(/\s+/g,' ').trim()}
 
-/* ====== RENDER ====== */
+/* Render */
 function renderQueue(){
-  el.queue.innerHTML = '';
-  const list = [...store.threads.values()].sort((a,b)=>b.lastAt-a.lastAt);
+  el.queue.innerHTML='';
+  const list=[...store.threads.values()].sort((a,b)=>b.lastAt-a.lastAt);
   for(const t of list){
-    const div = document.createElement('div'); div.className='item'; div.dataset.tid=t.threadId;
-    const initials = (t.profile||'?').slice(0,2).toUpperCase();
-    div.innerHTML = `
-      <div class="row1">
-        <div class="avatar">${initials}</div>
-        <div><strong>${t.customer}</strong><div class="muted" style="font-size:12px">${t.profile}</div></div>
-        <div class="meta">${fmt(t.lastAt)} ${t.unread?`<span class="unread">${t.unread}</span>`:''}</div>
-      </div>
-      <div class="preview">${(t.messages.at(-1)?.text||'').slice(0,140)}</div>
-    `;
+    const div=document.createElement('div');div.className='item';div.dataset.tid=t.threadId;
+    const initials=(t.profile||'?').slice(0,2).toUpperCase();
+    div.innerHTML=`<div class="row1">
+      <div class="avatar">${initials}</div>
+      <div><strong>${t.customer}</strong><div class="muted" style="font-size:12px">${t.profile}</div></div>
+      <div class="meta">${fmt(t.lastAt)} ${t.unread?`<span class="unread">${t.unread}</span>`:''}</div>
+    </div>
+    <div class="preview">${(t.messages.at(-1)?.text||'').slice(0,140)}</div>`;
     div.onclick=()=>select(t.threadId);
     el.queue.appendChild(div);
   }
-  el.unreadAll.textContent = `Ungelesen: ${store.unreadAll}`;
+  el.unreadAll.textContent=`Ungelesen: ${store.unreadAll}`;
 }
 function renderChat(){
-  const t = store.threads.get(store.selected);
-  el.chat.innerHTML='';
-  el.title.textContent = t ? t.customer : '–';
-  el.origin.textContent = t ? `von: ${t.profile}` : '';
+  const t=store.threads.get(store.selected); el.chat.innerHTML='';
+  el.title.textContent=t?t.customer:'–'; el.origin.textContent=t?`von: ${t.profile}`:'';
   if(!t) return;
   for(const m of t.messages){
-    const b = document.createElement('div'); b.className='bub '+(m.from==='me'?'me':'them');
-    b.textContent = `[${fmt(m.at)}] ${m.text}`;
-    el.chat.appendChild(b);
+    const b=document.createElement('div'); b.className='bub '+(m.from==='me'?'me':'them');
+    b.textContent=`[${fmt(m.at)}] ${m.text}`; el.chat.appendChild(b);
   }
-  el.chat.scrollTop = el.chat.scrollHeight;
-  // details
-  el.d_prof.textContent = t.profile; el.d_cust.textContent = t.customer;
-  el.d_tid.textContent = t.threadId; el.d_src.textContent = t.sourceId||'–';
+  el.chat.scrollTop=el.chat.scrollHeight;
+  el.d_prof.textContent=t.profile; el.d_cust.textContent=t.customer; el.d_tid.textContent=t.threadId; el.d_src.textContent=t.sourceId||'–';
 }
-function select(id){
-  store.selected = id;
-  const t = store.threads.get(id);
-  if(t){ store.unreadAll -= (t.unread||0); t.unread = 0; renderQueue(); renderChat(); }
-}
+function select(id){ store.selected=id; const t=store.threads.get(id); if(t){ store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat(); }}
 
-/* ====== SOUND + BLINK ====== */
-let blinkInt=null, titleOrig=document.title;
+/* Sound + Blink */
+let blinkInt=null,titleOrig=document.title;
 function ping(){
-  if(el.soundOn.checked){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(), g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=880; g.gain.value=.001; o.start(); g.gain.exponentialRampToValueAtTime(.00001, a.currentTime+.15); o.stop(a.currentTime+.16); setTimeout(()=>a.close(),250);}catch{} }
-  if(document.hidden){
-    if(blinkInt) return;
-    blinkInt=setInterval(()=>{ document.title = document.title===titleOrig ? '★ Neue Nachricht' : titleOrig; }, 700);
-  }
+  if(el.soundOn.checked){ try{ const a=new (window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(),g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=880; g.gain.value=.001; o.start(); g.gain.exponentialRampToValueAtTime(.00001, a.currentTime+.15); o.stop(a.currentTime+.16); setTimeout(()=>a.close(),250);}catch{} }
+  if(document.hidden){ if(blinkInt) return; blinkInt=setInterval(()=>{document.title=document.title===titleOrig?'★ Neue Nachricht':titleOrig;},700); }
 }
-window.addEventListener('visibilitychange', ()=>{ if(!document.hidden && blinkInt){ clearInterval(blinkInt); blinkInt=null; document.title=titleOrig; }});
+window.addEventListener('visibilitychange',()=>{ if(!document.hidden&&blinkInt){clearInterval(blinkInt);blinkInt=null;document.title=titleOrig;} });
 
-/* ====== INPUT ====== */
-el.send.onclick = send;
-el.reply.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
-function send(){
-  const t = store.threads.get(store.selected); if(!t) return;
-  const text = el.reply.value.trim(); if(!text) return;
-  el.reply.value='';
-  t.messages.push({from:'me', text, at:Date.now()});
-  renderChat();
-  const win = store.sources.get(t.sourceId); win && win.postMessage({type:'LC_SEND', threadId:t.threadId, text}, '*');
-  // Auto-Next
-  if(el.autoNext.checked){
-    const next = [...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
-    if(next) select(next.threadId);
-  }
+/* Send */
+el.send.onclick=send;
+el.reply.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+function send(){ const t=store.threads.get(store.selected); if(!t) return; const text=el.reply.value.trim(); if(!text) return;
+  el.reply.value=''; t.messages.push({from:'me',text,at:Date.now()}); renderChat();
+  const win=store.sources.get(t.sourceId); win&&win.postMessage({type:'LC_SEND',threadId:t.threadId,text},'*');
+  if(el.autoNext.checked){ const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0]; if(next) select(next.threadId); }
 }
 
-/* ====== HEARTBEAT ====== */
-let ok=false; setInterval(()=>{ el.dot.classList.toggle('ok', ok); ok=false; }, 1400);
+/* Heartbeat */
+let ok=false; setInterval(()=>{ el.dot.classList.toggle('ok',ok); ok=false; },1400);
 
-/* ====== MESSAGE BUS ====== */
-window.addEventListener('message', (ev)=>{
-  const msg = ev.data||{}; if(!msg.type) return;
-  if(msg.type==='LC_HELLO'){
-    ok=true; store.sources.set(msg.sourceId, ev.source); el.con.textContent = `Verbindungen: ${store.sources.size}`;
-    ev.source.postMessage({type:'LC_ACK', ack:true, hubTitle:document.title}, '*'); return;
-  }
+/* Dedup innerhalb des Hubs: gleiche „them“-Nachricht in <3s oder identischer Text im Ringpuffer ignorieren */
+function shouldAccept(t, text, at){
+  const n = norm(text);
+  if(!t._recent){ t._recent=[]; }                 // Ringpuffer (max 30)
+  // 1) Zeitfenster gegen letzte gleichlautende „them“-Message
+  const last = t.messages.at(-1);
+  if(last && last.from==='them' && norm(last.text)===n && (at - last.at) < 3000) return false;
+  // 2) in den letzten 30 Einträgen schon vorhanden?
+  if(t._recent.includes(n)) return false;
+  // push + trim
+  t._recent.push(n); if(t._recent.length>30) t._recent.shift();
+  return true;
+}
+
+/* Message Bus */
+window.addEventListener('message',(ev)=>{
+  const msg=ev.data||{}; if(!msg.type) return;
+  if(msg.type==='LC_HELLO'){ ok=true; store.sources.set(msg.sourceId,ev.source); el.con.textContent=`Verbindungen: ${store.sources.size}`; ev.source.postMessage({type:'LC_ACK',ack:true,hubTitle:document.title},'*'); return; }
   if(msg.type==='LC_PING'){ ok=true; return; }
   if(msg.type==='LC_MESSAGE'){
-    ok=true;
-    const p = msg.payload;
-    let t = store.threads.get(p.threadId);
-    if(!t){
-      t = {threadId:p.threadId, profile:p.profile, customer:p.customer, sourceId: msg.sourceId, messages:[], lastAt:0, unread:0};
-      store.threads.set(p.threadId, t);
-      // Auto-select, wenn nichts gewählt
-      if(!store.selected) select(p.threadId);
-    }
-    t.messages.push({from:p.from||'them', text:p.text, at:p.at||Date.now()});
-    t.lastAt = Date.now();
-    if(store.selected !== t.threadId){ t.unread = (t.unread||0)+1; store.unreadAll++; ping(); }
-    renderQueue();
-    if(store.selected === t.threadId){ renderChat(); }
-    return;
+    ok=true; const p=msg.payload; let t=store.threads.get(p.threadId);
+    if(!t){ t={threadId:p.threadId,profile:p.profile,customer:p.customer,sourceId:msg.sourceId,messages:[],lastAt:0,unread:0,_recent:[]}; store.threads.set(p.threadId,t); if(!store.selected) select(p.threadId); }
+    if(!shouldAccept(t,p.text,p.at||Date.now())) return; // <<< DEDUPE
+    t.messages.push({from:p.from||'them',text:p.text,at:p.at||Date.now()}); t.lastAt=Date.now();
+    if(store.selected!==t.threadId){ t.unread=(t.unread||0)+1; store.unreadAll++; ping(); }
+    renderQueue(); if(store.selected===t.threadId){ renderChat(); }
   }
 });
+window.addEventListener('resize',()=>{ const t=store.threads.get(store.selected); if(t) el.chat.scrollTop=el.chat.scrollHeight; });
 
-/* Auto-scroll beim Fenster-Resize */
-window.addEventListener('resize', ()=>{ const t = store.threads.get(store.selected); if(t) el.chat.scrollTop=el.chat.scrollHeight; });
 </script>
 </body>
 </html>
