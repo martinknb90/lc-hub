@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LC Hub – Zentrale Moderation (v3.1)</title>
+  <title>LC Hub – Zentrale Moderation (v3.2)</title>
   <script>window.name='LC_HUB';</script>
   <style>
     :root{--bg:#0b0f1a;--panel:#12172a;--panel2:#0e1324;--fg:#eef1ff;--muted:#a6aed6;--accent:#7aa2ff;--border:#242b4a}
@@ -30,13 +30,20 @@
     .chat{display:grid;grid-template-rows:48px 1fr 72px}
     .chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .origin{color:var(--muted);font-size:12px}
-    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;
-          padding:6px 10px;border-radius:10px;cursor:pointer}
+    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;padding:6px 10px;border-radius:10px;cursor:pointer}
     .xbtn:hover{border-color:#3a4591;color:#dfe4ff}
 
     .chatbody{padding:16px;overflow:auto}
-    .bub{max-width:72%;padding:10px 12px;border-radius:14px;margin:6px 0;white-space:pre-wrap;word-wrap:break-word}
-    .them{margin-right:auto;background:#1a1f3a}.me{margin-left:auto;background:#23315b}
+    .bub{max-width:72%;padding:10px 12px;border-radius:14px;margin:10px 0;white-space:pre-wrap;word-wrap:break-word}
+    .them{margin-right:auto;background:#1a1f3a}
+    .me{margin-left:auto;background:#23315b}
+    .btop{display:flex;gap:8px;align-items:center;font-size:11px;color:#aeb6ec;opacity:.9;margin-bottom:4px}
+    .bwho{padding:2px 6px;border-radius:999px;border:1px solid #2b356a}
+    .bwho.me{background:#2b3b7a;color:#dfe6ff;border-color:#3a4aa2}
+    .bwho.them{background:#253056;color:#cfd6ff}
+    .btime{margin-left:auto;opacity:.8}
+    .btext{white-space:pre-wrap}
+
     .cinp{display:flex;gap:10px;align-items:center;padding:12px;border-top:1px solid var(--border)}
     textarea{flex:1;min-height:52px;max-height:160px;padding:12px;border-radius:12px;border:1px solid #2a3156;background:#0f1428;color:var(--fg);resize:vertical}
     button{background:var(--accent);color:#0b1022;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
@@ -94,6 +101,12 @@
 </div>
 
 <script>
+/* ========= Helpers ========= */
+const qs=(s,r=document)=>r.querySelector(s);
+const fmt=t=>new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+const norm=t=>(t||'').replace(/\s+/g,' ').trim();
+function text(el, s){ el.textContent=s; }
+
 /* ========= State ========= */
 const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0,debug:false};
 const el={
@@ -105,8 +118,6 @@ const el={
   soundOn:qs('#soundOn'),debugOn:qs('#debugOn'),dbg:qs('#dbg')
 };
 el.debugOn.onchange=()=>{store.debug=el.debugOn.checked;};
-function qs(s,r=document){return r.querySelector(s)}
-function fmt(t){return new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
 function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,6000); }
 
 /* ========= Render ========= */
@@ -122,44 +133,61 @@ function renderQueue(){
   }
   el.unreadAll.textContent=`Ungelesen: ${store.unreadAll}`;
 }
+
+function bubble(m){
+  const b=document.createElement('div'); b.className='bub '+(m.from==='me'?'me':'them');
+  const top=document.createElement('div'); top.className='btop';
+  const who=document.createElement('span'); who.className='bwho '+(m.from==='me'?'me':'them'); who.textContent=m.from==='me'?'Du':'Kunde';
+  const time=document.createElement('span'); time.className='btime'; time.textContent=fmt(m.at);
+  top.appendChild(who); top.appendChild(time);
+  const body=document.createElement('div'); body.className='btext'; body.textContent=m.text;
+  b.appendChild(top); b.appendChild(body);
+  return b;
+}
+
 function renderChat(){
   const t=store.threads.get(store.selected); el.chat.innerHTML='';
   el.title.textContent=t?t.customer:'–'; el.origin.textContent=t?`von: ${t.profile}`:'';
   if(!t) return;
-  for(const m of t.messages){
-    const b=document.createElement('div'); b.className='bub '+(m.from==='me'?'me':'them');
-    b.textContent=`[${fmt(m.at)}] ${m.text}`; el.chat.appendChild(b);
-  }
+  for(const m of t.messages){ el.chat.appendChild(bubble(m)); }
   el.chat.scrollTop=el.chat.scrollHeight;
-  el.d_prof.textContent=t.profile; el.d_cust.textContent=t.customer; el.d_tid.textContent=t.threadId; el.d_src.textContent=t.sourceId||'–';
+  text(el.d_prof,t.profile); text(el.d_cust,t.customer); text(el.d_tid,t.threadId); text(el.d_src,t.sourceId||'–');
 }
+
 function select(id){
   store.selected=id;
-  const t=store.threads.get(id); if(t){ store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat(); }
+  const t=store.threads.get(id);
+  if(t){ store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat(); }
 }
-function closeThread(){
-  store.selected=null;
-  renderQueue(); renderChat(); // chat leer
-}
+
+function closeThread(){ store.selected=null; renderQueue(); renderChat(); }
 
 /* ========= Send ========= */
 el.send.onclick=send;
-el.reply.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
+el.reply.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
 el.closeBtn.onclick=closeThread;
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeThread(); }});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeThread(); }});
+
+function pushSent(t, text){
+  const n=norm(text); if(!t._sent) t._sent=[];
+  t._sent.push({n,at:Date.now()}); if(t._sent.length>10) t._sent.shift();
+}
 
 function send(){
   const t=store.threads.get(store.selected); if(!t) return;
   const text=el.reply.value.trim(); if(!text) return;
-  el.reply.value=''; t.messages.push({from:'me',text,at:Date.now()}); renderChat();
+  el.reply.value='';
+  t.messages.push({from:'me',text,at:Date.now()});
+  pushSent(t,text);
+  renderChat();
   const win=store.sources.get(t.sourceId); win&&win.postMessage({type:'LC_SEND',threadId:t.threadId,text},'*');
 
-  // Nach dem Senden: erst Auto-Next, sonst (wenn aktiviert) schließen
+  // Auto-Next → sonst Auto-Schließen
   if(el.autoNext.checked){
     const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
     if(next){ select(next.threadId); return; }
   }
-  if(el.autoClose.checked){ closeThread(); }
+  if(el.autoClose.checked){ setTimeout(closeThread, 150); }
 }
 
 /* ========= Heartbeat ========= */
@@ -183,11 +211,20 @@ window.addEventListener('message',(ev)=>{
     const tid = p.threadId && String(p.threadId).length>0 ? p.threadId : `${profile}::${customer}::stream`;
     let t = store.threads.get(tid);
     if(!t){
-      t={threadId:tid, profile, customer, sourceId:msg.sourceId, messages:[], lastAt:0, unread:0};
+      t={threadId:tid, profile, customer, sourceId:msg.sourceId, messages:[], lastAt:0, unread:0, _sent:[]};
       store.threads.set(tid,t);
-      if(!store.selected) select(tid); // ersten Thread automatisch öffnen
+      if(!store.selected) select(tid);
     }
-    t.messages.push({from:p.from||'them', text:String(p.text||'').trim(), at: p.at||Date.now()});
+
+    // ---- Echo-Guard: unterdrücke Server-Echo unserer eigenen Sendung (5s) ----
+    const incoming = String(p.text||'').trim();
+    const now=Date.now();
+    if(t._sent && t._sent.some(s=> s.n===norm(incoming) && (now-s.at)<5000)){
+      logDbg('drop echo');
+      return;
+    }
+
+    t.messages.push({from:p.from||'them', text:incoming, at:p.at||Date.now()});
     t.lastAt=Date.now();
     if(store.selected!==t.threadId){ t.unread=(t.unread||0)+1; store.unreadAll++; }
     renderQueue(); if(store.selected===t.threadId) renderChat();
@@ -201,4 +238,3 @@ window.addEventListener('resize', ()=>{ const t=store.threads.get(store.selected
 </body>
 </html>
 
-</html>
