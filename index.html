@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LC Hub – Zentrale Moderation (v3)</title>
+  <title>LC Hub – Zentrale Moderation (v3.1)</title>
   <script>window.name='LC_HUB';</script>
   <style>
     :root{--bg:#0b0f1a;--panel:#12172a;--panel2:#0e1324;--fg:#eef1ff;--muted:#a6aed6;--accent:#7aa2ff;--border:#242b4a}
@@ -26,15 +26,21 @@
     .meta{margin-left:auto;color:var(--muted);font-size:12px}
     .preview{margin-top:6px;color:#dfe4ff}
     .unread{margin-left:6px;background:#213169;color:#cfe0ff;border:1px solid #2a3a73;border-radius:10px;padding:1px 6px;font-size:11px}
+
     .chat{display:grid;grid-template-rows:48px 1fr 72px}
     .chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .origin{color:var(--muted);font-size:12px}
+    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;
+          padding:6px 10px;border-radius:10px;cursor:pointer}
+    .xbtn:hover{border-color:#3a4591;color:#dfe4ff}
+
     .chatbody{padding:16px;overflow:auto}
     .bub{max-width:72%;padding:10px 12px;border-radius:14px;margin:6px 0;white-space:pre-wrap;word-wrap:break-word}
     .them{margin-right:auto;background:#1a1f3a}.me{margin-left:auto;background:#23315b}
     .cinp{display:flex;gap:10px;align-items:center;padding:12px;border-top:1px solid var(--border)}
     textarea{flex:1;min-height:52px;max-height:160px;padding:12px;border-radius:12px;border:1px solid #2a3156;background:#0f1428;color:var(--fg);resize:vertical}
     button{background:var(--accent);color:#0b1022;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+
     .rpad{padding:12px}
     .card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px}
     .rrow{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed #2a3156}
@@ -51,16 +57,27 @@
     <span id="unreadAll" class="badge">Ungelesen: 0</span>
     <div class="flex"></div>
     <label class="badge"><input id="autoNext" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Auto-Next</label>
+    <label class="badge"><input id="autoClose" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Auto-Schließen</label>
     <label class="badge"><input id="soundOn" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Sound</label>
     <label class="badge"><input id="debugOn" type="checkbox" style="vertical-align:middle;margin-right:6px">Debug</label>
   </div>
+
   <div class="app">
     <div class="col"><div class="qhead"><strong>Eingang</strong></div><div id="queue" class="queue"></div></div>
+
     <div class="col chat">
-      <div class="chead"><strong id="title">–</strong><span id="origin" class="origin"></span></div>
+      <div class="chead">
+        <strong id="title">–</strong>
+        <span id="origin" class="origin"></span>
+        <button id="closeBtn" class="xbtn" title="Schließen (Esc)">✕</button>
+      </div>
       <div id="chat" class="chatbody"></div>
-      <div class="cinp"><textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea><button id="send">Senden</button></div>
+      <div class="cinp">
+        <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
+        <button id="send">Senden</button>
+      </div>
     </div>
+
     <div class="col rpad">
       <div class="card"><strong>Details</strong>
         <div class="rrow"><div>Profil</div><div id="d_prof" class="muted">–</div></div>
@@ -70,7 +87,7 @@
       </div>
       <div class="card"><strong>Debug</strong>
         <div id="dbg" class="dbg"></div>
-        <div class="pill">Enter: senden</div><div class="pill">Shift+Enter: Zeile</div>
+        <div class="pill">Enter: senden</div><div class="pill">Shift+Enter: Zeile</div><div class="pill">Esc: schließen</div>
       </div>
     </div>
   </div>
@@ -81,15 +98,16 @@
 const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0,debug:false};
 const el={
   queue:qs('#queue'),chat:qs('#chat'),title:qs('#title'),origin:qs('#origin'),
-  reply:qs('#reply'),send:qs('#send'),
+  reply:qs('#reply'),send:qs('#send'),closeBtn:qs('#closeBtn'),
   d_prof:qs('#d_prof'),d_cust:qs('#d_cust'),d_tid:qs('#d_tid'),d_src:qs('#d_src'),
   con:qs('#con'),dot:qs('#dot'),unreadAll:qs('#unreadAll'),
-  autoNext:qs('#autoNext'),soundOn:qs('#soundOn'),debugOn:qs('#debugOn'),dbg:qs('#dbg')
+  autoNext:qs('#autoNext'),autoClose:qs('#autoClose'),
+  soundOn:qs('#soundOn'),debugOn:qs('#debugOn'),dbg:qs('#dbg')
 };
 el.debugOn.onchange=()=>{store.debug=el.debugOn.checked;};
 function qs(s,r=document){return r.querySelector(s)}
 function fmt(t){return new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
-function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent = (s+'\n'+el.dbg.textContent).slice(0,6000); }
+function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,6000); }
 
 /* ========= Render ========= */
 function renderQueue(){
@@ -119,19 +137,29 @@ function select(id){
   store.selected=id;
   const t=store.threads.get(id); if(t){ store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat(); }
 }
+function closeThread(){
+  store.selected=null;
+  renderQueue(); renderChat(); // chat leer
+}
 
 /* ========= Send ========= */
 el.send.onclick=send;
 el.reply.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
+el.closeBtn.onclick=closeThread;
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeThread(); }});
+
 function send(){
   const t=store.threads.get(store.selected); if(!t) return;
   const text=el.reply.value.trim(); if(!text) return;
   el.reply.value=''; t.messages.push({from:'me',text,at:Date.now()}); renderChat();
   const win=store.sources.get(t.sourceId); win&&win.postMessage({type:'LC_SEND',threadId:t.threadId,text},'*');
+
+  // Nach dem Senden: erst Auto-Next, sonst (wenn aktiviert) schließen
   if(el.autoNext.checked){
     const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
-    if(next) select(next.threadId);
+    if(next){ select(next.threadId); return; }
   }
+  if(el.autoClose.checked){ closeThread(); }
 }
 
 /* ========= Heartbeat ========= */
@@ -150,10 +178,8 @@ window.addEventListener('message',(ev)=>{
 
   if(msg.type==='LC_MESSAGE'){
     ok=true; const p=msg.payload; logDbg(p);
-    // Fallback-Namen, wenn LC den Kundennamen nicht liefert:
     const customer = p.customer && p.customer.trim() ? p.customer : 'Unbekannt';
     const profile  = p.profile  && p.profile.trim()  ? p.profile  : 'Profil';
-    // Sichere Thread-ID (wenn p.threadId fehlt oder sich ständig ändert)
     const tid = p.threadId && String(p.threadId).length>0 ? p.threadId : `${profile}::${customer}::stream`;
     let t = store.threads.get(tid);
     if(!t){
@@ -161,7 +187,6 @@ window.addEventListener('message',(ev)=>{
       store.threads.set(tid,t);
       if(!store.selected) select(tid); // ersten Thread automatisch öffnen
     }
-    // KEIN DEDUPE: wir zeigen alles an (Dedupe, wenn gewünscht, kann später wieder an)
     t.messages.push({from:p.from||'them', text:String(p.text||'').trim(), at: p.at||Date.now()});
     t.lastAt=Date.now();
     if(store.selected!==t.threadId){ t.unread=(t.unread||0)+1; store.unreadAll++; }
@@ -174,4 +199,6 @@ window.addEventListener('message',(ev)=>{
 window.addEventListener('resize', ()=>{ const t=store.threads.get(store.selected); if(t) el.chat.scrollTop=el.chat.scrollHeight; });
 </script>
 </body>
+</html>
+
 </html>
