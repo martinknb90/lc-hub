@@ -3,20 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LC Hub – Zentrale Moderation (v3.3)</title>
+  <title>LC Hub – Zentrale Moderation (v3.4)</title>
   <script>window.name='LC_HUB';</script>
   <style>
     :root{--bg:#0b0f1a;--panel:#12172a;--panel2:#0e1324;--fg:#eef1ff;--muted:#a6aed6;--accent:#7aa2ff;--border:#242b4a}
     *{box-sizing:border-box}html,body{height:100%}
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
-        radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),
-        var(--bg);
-      color:var(--fg);
-      font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial
-    }
+    body{margin:0;background:
+      radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
+      radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),
+      var(--bg); color:var(--fg); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
     .shell{height:100%;display:grid;grid-template-rows:56px 1fr}
     .top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .badge{background:#1b2241;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted)}
@@ -36,8 +31,7 @@
     .chat{display:grid;grid-template-rows:48px 1fr 72px}
     .chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .origin{color:var(--muted);font-size:12px}
-    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;
-          padding:6px 10px;border-radius:10px;cursor:pointer}
+    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;padding:6px 10px;border-radius:10px;cursor:pointer}
     .xbtn:hover{border-color:#3a4591;color:#dfe4ff}
 
     .chatbody{padding:16px;overflow:auto}
@@ -59,7 +53,7 @@
     .card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px}
     .rrow{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed #2a3156}
     .muted{color:var(--muted)}
-    .dbg{font:12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;white-space:pre-wrap;max-height:200px;overflow:auto;background:#0a1022;border:1px solid #1d2350;border-radius:10px;padding:8px;margin:6px}
+    .dbg{font:12px/1.35 ui-monospace, Menlo, Consolas, monospace;white-space:pre-wrap;max-height:200px;overflow:auto;background:#0a1022;border:1px solid #1d2350;border-radius:10px;padding:8px;margin:6px}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a254f;color:#aeb8eb;margin-right:6px}
   </style>
 </head>
@@ -77,10 +71,7 @@
   </div>
 
   <div class="app">
-    <div class="col">
-      <div class="qhead"><strong>Eingang</strong></div>
-      <div id="queue" class="queue"></div>
-    </div>
+    <div class="col"><div class="qhead"><strong>Eingang</strong></div><div id="queue" class="queue"></div></div>
 
     <div class="col chat">
       <div class="chead">
@@ -90,7 +81,7 @@
       </div>
       <div id="chat" class="chatbody"></div>
       <div class="cinp">
-        <textarea id="reply" placeholder="Antwort schreiben…  (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
+        <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
         <button id="send">Senden</button>
       </div>
     </div>
@@ -111,12 +102,10 @@
 </div>
 
 <script>
-/* ========= Helpers ========= */
 const qs=(s,r=document)=>r.querySelector(s);
 const fmt=t=>new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 const norm=t=>(t||'').replace(/\s+/g,' ').trim();
 
-/* ========= State ========= */
 const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0,debug:false};
 const el={
   queue:qs('#queue'),chat:qs('#chat'),title:qs('#title'),origin:qs('#origin'),
@@ -129,7 +118,6 @@ const el={
 el.debugOn.onchange=()=>{store.debug=el.debugOn.checked;};
 function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,7000); }
 
-/* ========= Render ========= */
 function renderQueue(){
   el.queue.innerHTML='';
   const list=[...store.threads.values()].sort((a,b)=>b.lastAt-a.lastAt);
@@ -167,21 +155,22 @@ function renderChat(){
 function select(id){
   store.selected=id;
   const t=store.threads.get(id);
-  if(t){ store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat(); }
+  if(t){
+    store.unreadAll-=(t.unread||0); t.unread=0; renderQueue(); renderChat();
+    // 👉 Neu: LC-Tab auf diesen Kunden schalten
+    const win = store.sources.get(t.sourceId);
+    if(win){ try{ win.postMessage({ type:'LC_OPEN', threadId:t.threadId, customer:t.customer }, '*'); }catch{} }
+  }
 }
 
 function closeThread(){ store.selected=null; renderQueue(); renderChat(); }
 
-/* ========= Send ========= */
 el.send.onclick=send;
 el.reply.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
 el.closeBtn.onclick=closeThread;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeThread(); }});
 
-function pushSent(t, text){
-  const n=norm(text); if(!t._sent) t._sent=[];
-  t._sent.push({n,at:Date.now()}); if(t._sent.length>10) t._sent.shift();
-}
+function pushSent(t, text){ const n=norm(text); if(!t._sent) t._sent=[]; t._sent.push({n,at:Date.now()}); if(t._sent.length>10) t._sent.shift(); }
 
 function send(){
   const t=store.threads.get(store.selected); if(!t) return;
@@ -192,7 +181,6 @@ function send(){
   renderChat();
   const win=store.sources.get(t.sourceId); win&&win.postMessage({type:'LC_SEND',threadId:t.threadId,text},'*');
 
-  // Auto-Next → sonst Auto-Schließen
   if(el.autoNext.checked){
     const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
     if(next){ select(next.threadId); return; }
@@ -200,10 +188,8 @@ function send(){
   if(el.autoClose.checked){ setTimeout(closeThread, 120); }
 }
 
-/* ========= Heartbeat ========= */
 let ok=false; setInterval(()=>{ el.dot.classList.toggle('ok', ok); ok=false; },1400);
 
-/* ========= Message Bus ========= */
 window.addEventListener('message',(ev)=>{
   const msg=ev.data||{}; if(!msg.type) return;
 
@@ -230,7 +216,6 @@ window.addEventListener('message',(ev)=>{
       store.threads.set(tid, t);
     }
 
-    // Echo-Guard (unterdrückt Server-Echo eigener Sends für 5s)
     const incoming = String(p.text||'').trim();
     const now = Date.now();
     if (t._sent && t._sent.some(s => s.n === norm(incoming) && (now - s.at) < 5000)) {
@@ -240,13 +225,11 @@ window.addEventListener('message',(ev)=>{
     t.messages.push({from:p.from||'them', text:incoming, at:p.at||now});
     t.lastAt = now;
 
-    // ✅ WICHTIG: Wenn kein Thread offen ist (geschlossen), sofort öffnen
     if (!store.selected) {
-      select(tid);
+      select(tid); // select() triggert automatisch LC_OPEN
       return;
     }
 
-    // ansonsten normal zählen/anzeigen
     if (store.selected !== tid) {
       t.unread = (t.unread||0) + 1;
       store.unreadAll++;
@@ -259,7 +242,6 @@ window.addEventListener('message',(ev)=>{
   }
 });
 
-/* Autoscroll on resize */
 window.addEventListener('resize', ()=>{ const t=store.threads.get(store.selected); if(t) el.chat.scrollTop=el.chat.scrollHeight; });
 </script>
 </body>
