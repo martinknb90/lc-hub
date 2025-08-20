@@ -3,14 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LC Hub – Zentrale Moderation (v3.2)</title>
+  <title>LC Hub – Zentrale Moderation (v3.3)</title>
   <script>window.name='LC_HUB';</script>
   <style>
     :root{--bg:#0b0f1a;--panel:#12172a;--panel2:#0e1324;--fg:#eef1ff;--muted:#a6aed6;--accent:#7aa2ff;--border:#242b4a}
     *{box-sizing:border-box}html,body{height:100%}
-    body{margin:0;background:radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
-                       radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),var(--bg);
-         color:var(--fg);font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
+        radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),
+        var(--bg);
+      color:var(--fg);
+      font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial
+    }
     .shell{height:100%;display:grid;grid-template-rows:56px 1fr}
     .top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .badge{background:#1b2241;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted)}
@@ -30,7 +36,8 @@
     .chat{display:grid;grid-template-rows:48px 1fr 72px}
     .chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
     .origin{color:var(--muted);font-size:12px}
-    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;padding:6px 10px;border-radius:10px;cursor:pointer}
+    .xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;
+          padding:6px 10px;border-radius:10px;cursor:pointer}
     .xbtn:hover{border-color:#3a4591;color:#dfe4ff}
 
     .chatbody{padding:16px;overflow:auto}
@@ -70,7 +77,10 @@
   </div>
 
   <div class="app">
-    <div class="col"><div class="qhead"><strong>Eingang</strong></div><div id="queue" class="queue"></div></div>
+    <div class="col">
+      <div class="qhead"><strong>Eingang</strong></div>
+      <div id="queue" class="queue"></div>
+    </div>
 
     <div class="col chat">
       <div class="chead">
@@ -80,7 +90,7 @@
       </div>
       <div id="chat" class="chatbody"></div>
       <div class="cinp">
-        <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
+        <textarea id="reply" placeholder="Antwort schreiben…  (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
         <button id="send">Senden</button>
       </div>
     </div>
@@ -105,7 +115,6 @@
 const qs=(s,r=document)=>r.querySelector(s);
 const fmt=t=>new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 const norm=t=>(t||'').replace(/\s+/g,' ').trim();
-function text(el, s){ el.textContent=s; }
 
 /* ========= State ========= */
 const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0,debug:false};
@@ -118,7 +127,7 @@ const el={
   soundOn:qs('#soundOn'),debugOn:qs('#debugOn'),dbg:qs('#dbg')
 };
 el.debugOn.onchange=()=>{store.debug=el.debugOn.checked;};
-function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,6000); }
+function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,7000); }
 
 /* ========= Render ========= */
 function renderQueue(){
@@ -126,7 +135,8 @@ function renderQueue(){
   const list=[...store.threads.values()].sort((a,b)=>b.lastAt-a.lastAt);
   for(const t of list){
     const div=document.createElement('div');div.className='item';div.dataset.tid=t.threadId;
-    div.innerHTML=`<div class="row1"><strong>${t.customer}</strong><span class="meta">${fmt(t.lastAt)} ${t.unread?`<span class="unread">${t.unread}</span>`:''}</span></div>
+    div.innerHTML=`<div class="row1"><strong>${t.customer}</strong>
+      <span class="meta">${fmt(t.lastAt)} ${t.unread?`<span class="unread">${t.unread}</span>`:''}</span></div>
       <div class="preview">${(t.messages.at(-1)?.text||'').slice(0,160)}</div>`;
     div.onclick=()=>select(t.threadId);
     el.queue.appendChild(div);
@@ -151,7 +161,7 @@ function renderChat(){
   if(!t) return;
   for(const m of t.messages){ el.chat.appendChild(bubble(m)); }
   el.chat.scrollTop=el.chat.scrollHeight;
-  text(el.d_prof,t.profile); text(el.d_cust,t.customer); text(el.d_tid,t.threadId); text(el.d_src,t.sourceId||'–');
+  el.d_prof.textContent=t.profile; el.d_cust.textContent=t.customer; el.d_tid.textContent=t.threadId; el.d_src.textContent=t.sourceId||'–';
 }
 
 function select(id){
@@ -187,7 +197,7 @@ function send(){
     const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
     if(next){ select(next.threadId); return; }
   }
-  if(el.autoClose.checked){ setTimeout(closeThread, 150); }
+  if(el.autoClose.checked){ setTimeout(closeThread, 120); }
 }
 
 /* ========= Heartbeat ========= */
@@ -196,38 +206,55 @@ let ok=false; setInterval(()=>{ el.dot.classList.toggle('ok', ok); ok=false; },1
 /* ========= Message Bus ========= */
 window.addEventListener('message',(ev)=>{
   const msg=ev.data||{}; if(!msg.type) return;
+
   if(msg.type==='LC_HELLO'){
-    ok=true; store.sources.set(msg.sourceId,ev.source); el.con.textContent=`Verbindungen: ${store.sources.size}`;
+    ok=true; store.sources.set(msg.sourceId,ev.source);
+    el.con.textContent=`Verbindungen: ${store.sources.size}`;
     ev.source.postMessage({ type:'LC_ACK', ack:true, hubTitle:document.title }, '*');
     logDbg('HELLO '+msg.sourceId);
     return;
   }
   if(msg.type==='LC_PING'){ ok=true; return; }
 
-  if(msg.type==='LC_MESSAGE'){
-    ok=true; const p=msg.payload; logDbg(p);
+  if (msg.type === 'LC_MESSAGE') {
+    ok = true;
+    const p = msg.payload; logDbg(p);
+
     const customer = p.customer && p.customer.trim() ? p.customer : 'Unbekannt';
     const profile  = p.profile  && p.profile.trim()  ? p.profile  : 'Profil';
     const tid = p.threadId && String(p.threadId).length>0 ? p.threadId : `${profile}::${customer}::stream`;
+
     let t = store.threads.get(tid);
-    if(!t){
-      t={threadId:tid, profile, customer, sourceId:msg.sourceId, messages:[], lastAt:0, unread:0, _sent:[]};
-      store.threads.set(tid,t);
-      if(!store.selected) select(tid);
+    if (!t) {
+      t = { threadId: tid, profile, customer, sourceId: msg.sourceId, messages: [], lastAt: 0, unread: 0, _sent: [] };
+      store.threads.set(tid, t);
     }
 
-    // ---- Echo-Guard: unterdrücke Server-Echo unserer eigenen Sendung (5s) ----
+    // Echo-Guard (unterdrückt Server-Echo eigener Sends für 5s)
     const incoming = String(p.text||'').trim();
-    const now=Date.now();
-    if(t._sent && t._sent.some(s=> s.n===norm(incoming) && (now-s.at)<5000)){
-      logDbg('drop echo');
+    const now = Date.now();
+    if (t._sent && t._sent.some(s => s.n === norm(incoming) && (now - s.at) < 5000)) {
+      logDbg('drop echo'); return;
+    }
+
+    t.messages.push({from:p.from||'them', text:incoming, at:p.at||now});
+    t.lastAt = now;
+
+    // ✅ WICHTIG: Wenn kein Thread offen ist (geschlossen), sofort öffnen
+    if (!store.selected) {
+      select(tid);
       return;
     }
 
-    t.messages.push({from:p.from||'them', text:incoming, at:p.at||Date.now()});
-    t.lastAt=Date.now();
-    if(store.selected!==t.threadId){ t.unread=(t.unread||0)+1; store.unreadAll++; }
-    renderQueue(); if(store.selected===t.threadId) renderChat();
+    // ansonsten normal zählen/anzeigen
+    if (store.selected !== tid) {
+      t.unread = (t.unread||0) + 1;
+      store.unreadAll++;
+      renderQueue();
+    } else {
+      renderQueue();
+      renderChat();
+    }
     return;
   }
 });
@@ -237,4 +264,3 @@ window.addEventListener('resize', ()=>{ const t=store.threads.get(store.selected
 </script>
 </body>
 </html>
-
