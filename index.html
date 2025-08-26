@@ -2,25 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>LC Hub v4.0</title>
+  <title>LC Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: system-ui, sans-serif; margin: 16px; }
-    .row { display:flex; gap:12px; }
-    .col { flex:1; border:1px solid #ddd; border-radius:10px; padding:10px; }
-    .msg { padding:6px 8px; border-bottom:1px dashed #ddd; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .col { flex:1 1 320px; border:1px solid #ddd; border-radius:12px; padding:10px; }
+    .msg { padding:6px 8px; border-bottom:1px dashed #ddd; cursor:pointer; }
     .from { font-size:12px; opacity:.7; }
-    .controls { display:flex; gap:8px; margin-top:8px; }
-    textarea { width:100%; height:72px; }
     .badge { background:#eee; padding:2px 6px; border-radius:999px; font-size:12px; }
+    textarea { width:100%; height:80px; }
+    button { border:none; border-radius:8px; padding:8px 12px; cursor:pointer; }
+    #send { background:#0a7; color:#fff; }
+    #next { background:#ddd; }
+    #tabs > div { font-size:13px; padding:4px 6px; border-bottom:1px dashed #eee; }
   </style>
 </head>
 <body>
-  <h1>LC Hub v4.0</h1>
-  <label><input type="checkbox" id="autoNext"> Auto-Next</label>
+  <h1>LC Hub</h1>
+  <label><input type="checkbox" id="autonext"> Auto-Next</label>
 
   <div class="row">
     <div class="col">
-      <h3>Tabs</h3>
+      <h3>Verb. Tabs</h3>
       <div id="tabs"></div>
     </div>
     <div class="col">
@@ -29,83 +33,80 @@
     </div>
     <div class="col">
       <h3>Antwort</h3>
-      <div id="active"></div>
-      <textarea id="reply" placeholder="Antworttext..."></textarea>
-      <div class="controls">
+      <div id="active" style="font-size:12px;opacity:.7;margin-bottom:6px">Aktiv: –</div>
+      <textarea id="reply" placeholder="Antwort…"></textarea>
+      <div style="display:flex; gap:8px; margin-top:6px">
         <button id="send">Senden</button>
-        <button id="next">Nächster (unbeantwortet)</button>
+        <button id="next">Nächster</button>
       </div>
     </div>
   </div>
 
 <script>
-const tabs = new Map(); // tabId -> { profileName, win }
-const inbox = [];       // {tabId, profileName, convId, text, ts}
+const tabs = new Map(); // tabId -> { profileName, win, origin }
+const inbox = [];       // items pushed from tabs
+let activeMsg = null;
 
-const $ = sel => document.querySelector(sel);
-const listTabs = () => {
+const $ = s => document.querySelector(s);
+function renderTabs(){
   const el = $("#tabs"); el.innerHTML = "";
-  tabs.forEach((v,k)=> {
+  tabs.forEach((v,k)=>{
     const d = document.createElement("div");
-    d.textContent = `${v.profileName} (${k.slice(0,5)}...)`;
+    d.textContent = `${v.profileName} (${k.slice(0,5)}…)`;
     el.appendChild(d);
   });
-};
-const renderInbox = () => {
+}
+function renderInbox(){
   const el = $("#inbox"); el.innerHTML = "";
-  inbox.slice().reverse().forEach(m => {
+  inbox.slice().reverse().forEach(m=>{
     const d = document.createElement("div");
     d.className = "msg";
-    d.innerHTML = `<div><span class="badge">${m.profileName}</span> <b>${m.convId}</b></div>
+    d.innerHTML = `<div><span class="badge">${m.profile}</span> <b>${m.convId}</b></div>
                    <div>${m.text}</div>
                    <div class="from">${new Date(m.ts).toLocaleTimeString()}</div>`;
     d.onclick = () => setActive(m);
     el.appendChild(d);
   });
-};
-let activeMsg = null;
-const setActive = (m) => {
+}
+function setActive(m){
   activeMsg = m;
-  $("#active").textContent = `Aktiv: ${m.profileName} / ${m.convId}`;
-};
+  $("#active").textContent = `Aktiv: ${m.profile} / ${m.convId}`;
+}
 
 window.addEventListener("message", ev => {
   const data = ev.data || {};
+  // Minimaler, sicherer Flow: immer an den *genauen* Ursprung antworten
   if (data.type === 'hello' && data.source === 'lc-tab') {
     tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
     ev.source.postMessage({ type:'hello-ack' }, ev.origin);
-    listTabs();
+    renderTabs();
+    return;
   }
   if (data.type === 'incoming') {
-    (data.messages||[]).forEach(msg => {
-      if (msg.from === 'user') {
-        inbox.push({ tabId: data.tabId, profileName: data.profileName, convId: data.convId, text: msg.text, ts: data.ts });
+    (data.messages||[]).forEach(m=>{
+      if (m.from === 'user') {
+        inbox.push({ tabId:data.tabId, profile:data.profileName, convId:data.convId, text:m.text, ts:data.ts });
       }
     });
     renderInbox();
+    return;
   }
-  if (data.type === 'list-snapshot' || data.type === 'thread-snapshot' || data.type === 'heartbeat') {
-    // könnte geloggt / visualisiert werden
-  }
-  if (data.type === 'send-result') {
-    // Optional: Erfolg/Fehler anzeigen
-  }
+  // optional: list-snapshot, thread-snapshot, send-result etc.
 });
 
-// Controls
 $("#send").onclick = () => {
   if (!activeMsg) return alert("Kein Eintrag aktiv.");
   const t = $("#reply").value.trim();
   if (!t) return;
   const tab = tabs.get(activeMsg.tabId);
+  if (!tab) return;
   tab.win.postMessage({ type:'send-text', convId: activeMsg.convId, text: t }, tab.origin);
+  $("#reply").value = "";
 };
-
 $("#next").onclick = () => {
   tabs.forEach(tab => tab.win.postMessage({ type:'open-next-unread' }, tab.origin));
 };
-
-$("#autoNext").onchange = (e) => {
+$("#autonext").onchange = e => {
   const enabled = e.target.checked;
   tabs.forEach(tab => tab.win.postMessage({ type:'toggle-autonext', enabled }, tab.origin));
 };
