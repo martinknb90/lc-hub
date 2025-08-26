@@ -5,22 +5,25 @@
   <title>LC Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .col { flex:1 1 320px; border:1px solid #e5e5e5; border-radius:12px; padding:10px; }
-    .msg { padding:6px 8px; border-bottom:1px dashed #eee; cursor:pointer; }
-    .from { font-size:12px; opacity:.7; }
-    .badge { background:#eee; padding:2px 6px; border-radius:999px; font-size:12px; }
-    textarea { width:100%; height:90px; }
-    button { border:none; border-radius:8px; padding:8px 12px; cursor:pointer; }
-    #send { background:#0a7; color:#fff; } #next { background:#ddd; }
-    #tabs > div { font-size:13px; padding:4px 6px; border-bottom:1px dashed #eee; }
-    #log { white-space:pre-wrap; font-size:12px; background:#f8f8f8; border:1px solid #eee; padding:8px; border-radius:8px; height:140px; overflow:auto; }
+    body{font-family:system-ui, sans-serif;margin:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 360px;border:1px solid #e6e6e6;border-radius:12px;padding:10px}
+    #tabs>div{font-size:13px;padding:4px 6px;border-bottom:1px dashed #eee}
+    .inbox-item{padding:8px;border-bottom:1px dashed #eee;cursor:pointer}
+    .badge{background:#eee;padding:2px 6px;border-radius:999px;font-size:12px}
+    .thread{height:48vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:8px;background:#fafafa}
+    .bubble{margin:6px 0;padding:8px 10px;border-radius:10px;max-width:85%}
+    .from-user{background:#fff;border:1px solid #ddd}
+    .from-me{background:#e8fff2;border:1px solid #bfe8cc;margin-left:auto}
+    textarea{width:100%;height:90px}
+    button{border:none;border-radius:8px;padding:8px 12px;cursor:pointer}
+    #send{background:#0a7;color:#fff} #next{background:#ddd}
+    #log{white-space:pre-wrap;font-size:12px;background:#f8f8f8;border:1px solid #eee;padding:8px;border-radius:8px;height:120px;overflow:auto}
   </style>
 </head>
 <body>
   <h1>LC Hub</h1>
-  <div style="margin:8px 0; font-size:14px">
+  <div style="margin:8px 0 14px;font-size:14px">
     Verbindungen: <b id="conn">0</b> &nbsp;|&nbsp;
     <label><input type="checkbox" id="autonext"> Auto-Next</label>
   </div>
@@ -35,10 +38,11 @@
       <div id="inbox"></div>
     </div>
     <div class="col">
-      <h3>Antwort</h3>
-      <div id="active" style="font-size:12px;opacity:.7;margin-bottom:6px">Aktiv: –</div>
+      <h3>Thread</h3>
+      <div id="active">Aktiv: –</div>
+      <div id="thread" class="thread"></div>
       <textarea id="reply" placeholder="Antwort…"></textarea>
-      <div style="display:flex; gap:8px; margin-top:6px">
+      <div style="display:flex;gap:8px;margin-top:6px">
         <button id="send">Senden</button>
         <button id="next">Nächster</button>
       </div>
@@ -50,138 +54,86 @@
 
 <script>
 const tabs = new Map(); // tabId -> { profileName, win, origin }
-const inbox = [];
-let activeMsg = null;
+const inbox = [];       // {tabId, profile, convId, preview, ts}
+let active = null;      // {tabId, convId, profile}
 
 const $ = s => document.querySelector(s);
 function log(...a){ const el=$("#log"); el.textContent += a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')+"\n"; el.scrollTop=el.scrollHeight; }
 
 function renderTabs(){
-  const el = $("#tabs"); el.innerHTML = "";
-  tabs.forEach((v,k)=>{
-    const d = document.createElement("div");
-    d.textContent = `${v.profileName} (${k.slice(0,5)}…)`;
-    el.appendChild(d);
-  });
-  $("#conn").textContent = String(tabs.size);
+  const el=$("#tabs"); el.innerHTML="";
+  tabs.forEach((v,k)=>{ const d=document.createElement('div'); d.textContent=`${v.profileName} (${k.slice(0,5)}…)`; el.appendChild(d); });
+  $("#conn").textContent=String(tabs.size);
 }
 function renderInbox(){
-  const el = $("#inbox"); el.innerHTML = "";
+  const el=$("#inbox"); el.innerHTML="";
   inbox.slice().reverse().forEach(m=>{
-    const d = document.createElement("div");
-    d.className = "msg";
-    d.innerHTML = `<div><span class="badge">${m.profile}</span> <b>${m.convId}</b></div>
-                   <div>${m.text}</div>
-                   <div class="from">${new Date(m.ts).toLocaleTimeString()}</div>`;
-    d.onclick = () => setActive(m);
+    const d=document.createElement('div');
+    d.className='inbox-item';
+    d.innerHTML=`<div><span class="badge">${m.profile}</span> <b>${m.convId}</b></div><div>${m.preview}</div><div style="font-size:11px;opacity:.6">${new Date(m.ts).toLocaleTimeString()}</div>`;
+    d.onclick=()=>openThread(m.tabId, m.convId, m.profile);
     el.appendChild(d);
   });
 }
-function setActive(m){
-  activeMsg = m;
-  $("#active").textContent = `Aktiv: ${m.profile} / ${m.convId}`;
+function renderThread(list=[]){
+  const el=$("#thread"); el.innerHTML="";
+  list.forEach(msg=>{
+    const b=document.createElement('div');
+    b.className='bubble '+(msg.from==='me'?'from-me':'from-user');
+    b.textContent=msg.text;
+    el.appendChild(b);
+  });
+  el.scrollTop=el.scrollHeight;
+  $("#active").textContent = active ? `Aktiv: ${active.profile} / ${active.convId}` : 'Aktiv: –';
 }
 
-// WICHTIG: Hello -> hello-ack + Standard-Flows
-window.addEventListener("message", ev => {
+function openThread(tabId, convId, profile){
+  active = { tabId, convId, profile };
+  const t = tabs.get(tabId); if (!t) return;
+  // 1) im Tab öffnen
+  t.win.postMessage({ type:'open-conv', convId }, t.origin);
+  // 2) Thread anfordern
+  t.win.postMessage({ type:'request-thread', convId }, t.origin);
+}
+
+window.addEventListener("message", ev=>{
   const data = ev.data || {};
   log("[Hub<-]", ev.origin, data);
-
-  if (data.type === 'hello' && data.source === 'lc-tab') {
-    tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
+  if (data.type==='hello' && data.source==='lc-tab'){
+    tabs.set(data.tabId, { profileName:data.profileName, win:ev.source, origin:ev.origin });
     ev.source.postMessage({ type:'hello-ack' }, ev.origin);
-    renderTabs();
-    return;
+    renderTabs(); return;
   }
-  if (data.type === 'incoming') {
+  if (data.type==='incoming'){
+    // in Inbox aufnehmen
     (data.messages||[]).forEach(m=>{
-      if (m.from === 'user') {
-        inbox.push({ tabId:data.tabId, profile:data.profileName, convId:data.convId, text:m.text, ts:data.ts });
+      if (m.from==='user'){
+        inbox.push({ tabId:data.tabId, profile:data.profileName, convId:data.convId, preview:m.text, ts:data.ts });
       }
     });
-    renderInbox();
+    renderInbox(); return;
+  }
+  if (data.type==='thread-snapshot'){
+    // kompletter Verlauf
+    if (active && data.convId===active.convId && data.tabId===active.tabId){
+      renderThread(data.messages||[]);
+    }
     return;
   }
-  if (data.type === 'send-result') {
-    log('[Hub] send-result', data);
+  if (data.type==='send-result'){
+    // optional anzeigen
   }
 });
 
-$("#send").onclick = () => {
-  if (!activeMsg) return alert("Kein Eintrag aktiv.");
-  const t = $("#reply").value.trim();
-  if (!t) return;
-  const tab = tabs.get(activeMsg.tabId);
-  if (!tab) return;
-  tab.win.postMessage({ type:'send-text', convId: activeMsg.convId, text: t }, tab.origin);
-  $("#reply").value = "";
+$("#send").onclick = ()=>{
+  if (!active) return alert("Kein Chat aktiv");
+  const t = $("#reply").value.trim(); if (!t) return;
+  const tab = tabs.get(active.tabId); if (!tab) return;
+  tab.win.postMessage({ type:'send-text', convId:active.convId, text:t }, tab.origin);
+  $("#reply").value="";
 };
-$("#next").onclick = () => {
-  tabs.forEach(tab => tab.win.postMessage({ type:'open-next-unread' }, tab.origin));
-};
-$("#autonext").onchange = e => {
-  const enabled = e.target.checked;
-  tabs.forEach(tab => tab.win.postMessage({ type:'toggle-autonext', enabled }, tab.origin));
-};
-</script>
-</body>
-</html>
-    const d = document.createElement("div");
-    d.className = "msg";
-    d.innerHTML = `<div><span class="badge">${m.profile}</span> <b>${m.convId}</b></div>
-                   <div>${m.text}</div>
-                   <div class="from">${new Date(m.ts).toLocaleTimeString()}</div>`;
-    d.onclick = () => setActive(m);
-    el.appendChild(d);
-  });
-}
-function setActive(m){
-  activeMsg = m;
-  $("#active").textContent = `Aktiv: ${m.profile} / ${m.convId}`;
-}
-
-// <<< DAS WICHTIGE FIX >>> 
-// Immer auf HELLO reagieren und hello-ack zurückschicken
-window.addEventListener("message", ev => {
-  const data = ev.data || {};
-  console.log('[Hub] from', ev.origin, data);
-
-  if (data.type === 'hello' && data.source === 'lc-tab') {
-    tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
-    ev.source.postMessage({ type:'hello-ack' }, ev.origin); // <-- ACK senden
-    renderTabs();
-    return;
-  }
-  if (data.type === 'incoming') {
-    (data.messages||[]).forEach(m=>{
-      if (m.from === 'user') {
-        inbox.push({ tabId:data.tabId, profile:data.profileName, convId:data.convId, text:m.text, ts:data.ts });
-      }
-    });
-    renderInbox();
-    return;
-  }
-  if (data.type === 'send-result') {
-    console.log('[Hub] SendResult', data);
-  }
-});
-
-$("#send").onclick = () => {
-  if (!activeMsg) return alert("Kein Eintrag aktiv.");
-  const t = $("#reply").value.trim();
-  if (!t) return;
-  const tab = tabs.get(activeMsg.tabId);
-  if (!tab) return;
-  tab.win.postMessage({ type:'send-text', convId: activeMsg.convId, text: t }, tab.origin);
-  $("#reply").value = "";
-};
-$("#next").onclick = () => {
-  tabs.forEach(tab => tab.win.postMessage({ type:'open-next-unread' }, tab.origin));
-};
-$("#autonext").onchange = e => {
-  const enabled = e.target.checked;
-  tabs.forEach(tab => tab.win.postMessage({ type:'toggle-autonext', enabled }, tab.origin));
-};
+$("#next").onclick = ()=>{ tabs.forEach(t => t.win.postMessage({ type:'open-next-unread' }, t.origin)); };
+$("#autonext").onchange = e => { const en = e.target.checked; tabs.forEach(t => t.win.postMessage({ type:'toggle-autonext', enabled:en }, t.origin)); };
 </script>
 </body>
 </html>
