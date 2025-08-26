@@ -1,306 +1,114 @@
 <!doctype html>
-<html lang="de">
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>LC Hub – Zentrale Moderation (v3.6)</title>
-<script>window.name='LC_HUB';</script>
-<style>
-:root{--bg:#0b0f1a;--panel:#12172a;--panel2:#0e1324;--fg:#eef1ff;--muted:#a6aed6;--accent:#7aa2ff;--border:#242b4a}
-*{box-sizing:border-box}html,body{height:100%}
-body{margin:0;background:
-  radial-gradient(1200px 600px at 10% 0%, #0f1530 0%, transparent 40%),
-  radial-gradient(1000px 600px at 90% 100%, #12224f 0%, transparent 40%),
-  var(--bg); color:var(--fg); font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}
-.shell{height:100%;display:grid;grid-template-rows:56px 1fr}
-.top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
-.badge{background:#1b2241;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted)}
-.dot{width:10px;height:10px;border-radius:50%;background:#6b7280}.ok{background:#42d392}
-.flex{flex:1}
-.app{display:grid;grid-template-columns:290px 1fr 320px;gap:12px;padding:12px;height:calc(100vh - 56px)}
-.col{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:auto}
-.qhead{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
-.queue{padding:10px}
-.item{padding:10px 12px;border-radius:12px;margin:8px 0;background:var(--panel2);cursor:pointer;border:1px solid transparent}
-.item:hover{border-color:var(--accent)}
-.row1{display:flex;align-items:center;gap:8px}
-.meta{margin-left:auto;color:var(--muted);font-size:12px}
-.preview{margin-top:6px;color:#dfe4ff}
-.unread{margin-left:6px;background:#213169;color:#cfe0ff;border:1px solid #2a3a73;border-radius:10px;padding:1px 6px;font-size:11px}
-.hint{background:#2a2342}
-.chat{display:grid;grid-template-rows:48px 1fr 72px}
-.chead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
-.origin{color:var(--muted);font-size:12px}
-.xbtn{margin-left:auto;background:transparent;border:1px solid var(--border);color:#aab4ee;padding:6px 10px;border-radius:10px;cursor:pointer}
-.xbtn:hover{border-color:#3a4591;color:#dfe4ff}
-.chatbody{padding:16px;overflow:auto}
-.bub{max-width:72%;padding:10px 12px;border-radius:14px;margin:10px 0;white-space:pre-wrap;word-wrap:break-word}
-.them{margin-right:auto;background:#1a1f3a}
-.me{margin-left:auto;background:#23315b}
-.btop{display:flex;gap:8px;align-items:center;font-size:11px;color:#aeb6ec;opacity:.9;margin-bottom:4px}
-.bwho{padding:2px 6px;border-radius:999px;border:1px solid #2b356a}
-.bwho.me{background:#2b3b7a;color:#dfe6ff;border-color:#3a4aa2}
-.bwho.them{background:#253056;color:#cfd6ff}
-.btime{margin-left:auto;opacity:.8}
-.btext{white-space:pre-wrap}
-.cinp{display:flex;gap:10px;align-items:center;padding:12px;border-top:1px solid var(--border)}
-textarea{flex:1;min-height:52px;max-height:160px;padding:12px;border-radius:12px;border:1px solid #2a3156;background:#0f1428;color:#fff;resize:vertical}
-button{background:var(--accent);color:#0b1022;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-.rpad{padding:12px}
-.card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px}
-.rrow{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed #2a3156}
-.muted{color:var(--muted)}
-.dbg{font:12px/1.35 ui-monospace, Menlo, Consolas, monospace;white-space:pre-wrap;max-height:200px;overflow:auto;background:#0a1022;border:1px solid #1d2350;border-radius:10px;padding:8px;margin:6px}
-.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a254f;color:#aeb8eb;margin-right:6px}
-</style>
+  <meta charset="utf-8" />
+  <title>LC Hub v4.0</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; border:1px solid #ddd; border-radius:10px; padding:10px; }
+    .msg { padding:6px 8px; border-bottom:1px dashed #ddd; }
+    .from { font-size:12px; opacity:.7; }
+    .controls { display:flex; gap:8px; margin-top:8px; }
+    textarea { width:100%; height:72px; }
+    .badge { background:#eee; padding:2px 6px; border-radius:999px; font-size:12px; }
+  </style>
 </head>
 <body>
-<div class="shell">
-  <div class="top">
-    <div id="dot" class="dot"></div><strong>LC Hub</strong>
-    <span id="con" class="badge">Verbindungen: 0</span>
-    <span id="unreadAll" class="badge">Ungelesen: 0</span>
-    <div class="flex"></div>
-    <label class="badge"><input id="autoNext" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Auto-Next</label>
-    <label class="badge"><input id="autoClose" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Auto-Schließen</label>
-    <label class="badge"><input id="soundOn" type="checkbox" checked style="vertical-align:middle;margin-right:6px">Sound</label>
-    <label class="badge"><input id="debugOn" type="checkbox" style="vertical-align:middle;margin-right:6px">Debug</label>
-  </div>
+  <h1>LC Hub v4.0</h1>
+  <label><input type="checkbox" id="autoNext"> Auto-Next</label>
 
-  <div class="app">
-    <div class="col"><div class="qhead"><strong>Eingang</strong></div><div id="queue" class="queue"></div></div>
-
-    <div class="col chat">
-      <div class="chead">
-        <strong id="title">–</strong>
-        <span id="origin" class="origin"></span>
-        <button id="closeBtn" class="xbtn" title="Schließen (Esc)">✕</button>
-      </div>
-      <div id="chat" class="chatbody"></div>
-      <div class="cinp">
-        <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
+  <div class="row">
+    <div class="col">
+      <h3>Tabs</h3>
+      <div id="tabs"></div>
+    </div>
+    <div class="col">
+      <h3>Eingang</h3>
+      <div id="inbox"></div>
+    </div>
+    <div class="col">
+      <h3>Antwort</h3>
+      <div id="active"></div>
+      <textarea id="reply" placeholder="Antworttext..."></textarea>
+      <div class="controls">
         <button id="send">Senden</button>
-      </div>
-    </div>
-
-    <div class="col rpad">
-      <div class="card"><strong>Details</strong>
-        <div class="rrow"><div>Profil</div><div id="d_prof" class="muted">–</div></div>
-        <div class="rrow"><div>Kunde</div><div id="d_cust" class="muted">–</div></div>
-        <div class="rrow"><div>Thread-ID</div><div id="d_tid" class="muted">–</div></div>
-        <div class="rrow"><div>Quelle</div><div id="d_src" class="muted">–</div></div>
-      </div>
-      <div class="card"><strong>Debug</strong>
-        <div id="dbg" class="dbg"></div>
-        <div class="pill">Enter: senden</div><div class="pill">Shift+Enter: Zeile</div><div class="pill">Esc: schließen</div>
+        <button id="next">Nächster (unbeantwortet)</button>
       </div>
     </div>
   </div>
-</div>
 
 <script>
-/* ===== Helpers ===== */
-const qs=(s,r=document)=>r.querySelector(s);
-const fmt=t=>new Date(t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-const norm=t=>(t||'').replace(/\s+/g,' ').trim();
+const tabs = new Map(); // tabId -> { profileName, win }
+const inbox = [];       // {tabId, profileName, convId, text, ts}
 
-/* ===== State & Elements ===== */
-const store={threads:new Map(),sources:new Map(),selected:null,unreadAll:0,debug:false};
-const el={
-  queue:qs('#queue'),chat:qs('#chat'),title:qs('#title'),origin:qs('#origin'),
-  reply:qs('#reply'),send:qs('#send'),closeBtn:qs('#closeBtn'),
-  d_prof:qs('#d_prof'),d_cust:qs('#d_cust'),d_tid:qs('#d_tid'),d_src:qs('#d_src'),
-  con:qs('#con'),dot:qs('#dot'),unreadAll:qs('#unreadAll'),
-  autoNext:qs('#autoNext'),autoClose:qs('#autoClose'),
-  soundOn:qs('#soundOn'),debugOn:qs('#debugOn'),dbg:qs('#dbg')
+const $ = sel => document.querySelector(sel);
+const listTabs = () => {
+  const el = $("#tabs"); el.innerHTML = "";
+  tabs.forEach((v,k)=> {
+    const d = document.createElement("div");
+    d.textContent = `${v.profileName} (${k.slice(0,5)}...)`;
+    el.appendChild(d);
+  });
 };
-el.debugOn.onchange=()=>{store.debug=el.debugOn.checked;};
-function logDbg(x){ if(!store.debug) return; const s=typeof x==='string'?x:JSON.stringify(x); el.dbg.textContent=(s+'\n'+el.dbg.textContent).slice(0,7000); }
+const renderInbox = () => {
+  const el = $("#inbox"); el.innerHTML = "";
+  inbox.slice().reverse().forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg";
+    d.innerHTML = `<div><span class="badge">${m.profileName}</span> <b>${m.convId}</b></div>
+                   <div>${m.text}</div>
+                   <div class="from">${new Date(m.ts).toLocaleTimeString()}</div>`;
+    d.onclick = () => setActive(m);
+    el.appendChild(d);
+  });
+};
+let activeMsg = null;
+const setActive = (m) => {
+  activeMsg = m;
+  $("#active").textContent = `Aktiv: ${m.profileName} / ${m.convId}`;
+};
 
-/* ===== UI render ===== */
-function renderQueue(){
-  el.queue.innerHTML='';
-  const list=[...store.threads.values()].sort((a,b)=>b.lastAt-a.lastAt);
-  for(const t of list){
-    const div=document.createElement('div');
-    div.className='item'+(t._hint?' hint':'');
-    div.dataset.tid=t.threadId;
-    div.innerHTML=`<div class="row1"><strong>${t.customer}</strong>
-      <span class="meta">${fmt(t.lastAt)} ${t.unread?`<span class="unread">${t.unread}</span>`:''}</span></div>
-      <div class="preview">${(t.messages.at(-1)?.text||'').slice(0,160)}</div>`;
-    div.onclick=()=>select(t.threadId);
-    el.queue.appendChild(div);
+window.addEventListener("message", ev => {
+  const data = ev.data || {};
+  if (data.type === 'hello' && data.source === 'lc-tab') {
+    tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
+    ev.source.postMessage({ type:'hello-ack' }, ev.origin);
+    listTabs();
   }
-  el.unreadAll.textContent=`Ungelesen: ${store.unreadAll}`;
-}
-function bubble(m){
-  const b=document.createElement('div'); b.className='bub '+(m.from==='me'?'me':'them');
-  const top=document.createElement('div'); top.className='btop';
-  const who=document.createElement('span'); who.className='bwho '+(m.from==='me'?'me':'them'); who.textContent=m.from==='me'?'Du':'Kunde';
-  const time=document.createElement('span'); time.className='btime'; time.textContent=fmt(m.at);
-  top.appendChild(who); top.appendChild(time);
-  const body=document.createElement('div'); body.className='btext'; body.textContent=m.text;
-  b.appendChild(top); b.appendChild(body);
-  return b;
-}
-function renderChat(){
-  const t=store.threads.get(store.selected); el.chat.innerHTML='';
-  el.title.textContent=t?t.customer:'–'; el.origin.textContent=t?`von: ${t.profile}`:'';
-  if(!t) return;
-  for(const m of t.messages){ el.chat.appendChild(bubble(m)); }
-  el.chat.scrollTop=el.chat.scrollHeight;
-  el.d_prof.textContent=t.profile; el.d_cust.textContent=t.customer; el.d_tid.textContent=t.threadId; el.d_src.textContent=t.sourceId||'–';
-}
-
-/* ===== Helper: Thread via Profil+Name finden ===== */
-function findThreadByName(profile, customer){
-  const list = [...store.threads.values()];
-  const p = (profile||'').trim().toLowerCase();
-  const c = (customer||'').trim().toLowerCase();
-  return list.find(t => (t.profile||'').trim().toLowerCase() === p &&
-                        (t.customer||'').trim().toLowerCase() === c);
-}
-
-/* ===== ACTIVE SELECT: Klick im LC erzwingen ===== */
-function select(id){
-  store.selected=id;
-  const t=store.threads.get(id);
-  if(t){
-    store.unreadAll-=(t.unread||0); t.unread=0;
-    renderQueue(); renderChat();
-    const win = store.sources.get(t.sourceId);
-    if (win) {
-      try {
-        win.postMessage({ type:'LC_OPEN', customer:t.customer }, '*');           // per Name
-        setTimeout(()=>win.postMessage({ type:'LC_OPEN_FIRST_UNREAD' }, '*'), 350); // Fallback
-      } catch (e) {}
-    }
+  if (data.type === 'incoming') {
+    (data.messages||[]).forEach(msg => {
+      if (msg.from === 'user') {
+        inbox.push({ tabId: data.tabId, profileName: data.profileName, convId: data.convId, text: msg.text, ts: data.ts });
+      }
+    });
+    renderInbox();
   }
-}
-
-/* ===== Close / Send ===== */
-function closeThread(){ store.selected=null; renderQueue(); renderChat(); }
-el.closeBtn.onclick=closeThread;
-
-el.send.onclick=send;
-el.reply.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
-
-function pushSent(t, text){ const n=norm(text); if(!t._sent) t._sent=[]; t._sent.push({n,at:Date.now()}); if(t._sent.length>10) t._sent.shift(); }
-
-function send(){
-  const t=store.threads.get(store.selected); if(!t) return;
-  const text=el.reply.value.trim(); if(!text) return;
-  el.reply.value='';
-  t.messages.push({from:'me',text,at:Date.now()});
-  pushSent(t,text);
-  renderChat();
-  const win=store.sources.get(t.sourceId);
-  if(win){
-    try{
-      win.postMessage({type:'LC_SEND',threadId:t.threadId,text},'*');
-      setTimeout(()=>win.postMessage({ type:'LC_OPEN_FIRST_UNREAD' }, '*'), 200);
-    }catch(e){}
+  if (data.type === 'list-snapshot' || data.type === 'thread-snapshot' || data.type === 'heartbeat') {
+    // könnte geloggt / visualisiert werden
   }
-  if(el.autoNext.checked){
-    const next=[...store.threads.values()].filter(x=>x.unread).sort((a,b)=>b.lastAt-a.lastAt)[0];
-    if(next){ select(next.threadId); return; }
-  }
-  if(el.autoClose.checked){ setTimeout(closeThread, 120); }
-}
-
-/* ===== Connections / Heartbeat ===== */
-let ok=false; setInterval(()=>{ el.dot.classList.toggle('ok', ok); ok=false; },1400);
-
-/* ===== Messaging from LC tabs ===== */
-window.addEventListener('message',(ev)=>{
-  const msg=ev.data||{}; if(!msg.type) return;
-
-  if(msg.type==='LC_HELLO'){
-    ok=true; store.sources.set(msg.sourceId,ev.source);
-    el.con.textContent=`Verbindungen: ${store.sources.size}`;
-    ev.source.postMessage({ type:'LC_ACK', ack:true, hubTitle:document.title }, '*');
-    logDbg('HELLO '+msg.sourceId);
-    return;
-  }
-  if(msg.type==='LC_PING'){ ok=true; return; }
-
-  // NEU: Hinweis aus der linken Liste (Listener ohne Umschalten)
-  if (msg.type === 'LC_LIST_UNREAD') {
-    const { profile, customer, at, preview } = msg.payload || {};
-    const prof = (profile||'Profil').trim();
-    const cust = (customer||'Unbekannt').trim();
-    const when = at || Date.now();
-
-    // Schon vorhanden?
-    let t = findThreadByName(prof, cust);
-    if (!t) {
-      const tid = `${prof}::${cust}::hint`;
-      t = { threadId: tid, profile: prof, customer: cust, sourceId: msg.sourceId, messages: [], lastAt: 0, unread: 0, _hint:true, _sent:[] };
-      store.threads.set(tid, t);
-    }
-    const text = (preview && preview.trim()) ? preview.trim() : '🔔 Neue Nachricht (noch nicht geöffnet)';
-    if (!t.messages.length || t.messages.at(-1).text !== text) {
-      t.messages.push({from:'them', text, at: when });
-      t.unread = (t.unread||0) + 1;
-      store.unreadAll++;
-      t.lastAt = when;
-    }
-    renderQueue();
-    if (!store.selected) { select(t.threadId); }
-    return;
-  }
-
-  if (msg.type === 'LC_MESSAGE') {
-    ok = true;
-    const p = msg.payload; logDbg(p);
-
-    const customer = p.customer && p.customer.trim() ? p.customer : 'Unbekannt';
-    const profile  = p.profile  && p.profile.trim()  ? p.profile  : 'Profil';
-    const tid = p.threadId && String(p.threadId).length>0 ? p.threadId : `${profile}::${customer}::stream`;
-
-    let t = store.threads.get(tid);
-    if (!t) {
-      t = { threadId: tid, profile, customer, sourceId: msg.sourceId, messages: [], lastAt: 0, unread: 0, _sent: [] };
-      store.threads.set(tid, t);
-    }
-
-    const incoming = String(p.text||'').trim();
-    const now = Date.now();
-    if (t._sent && t._sent.some(s => s.n === norm(incoming) && (now - s.at) < 5000)) {
-      logDbg('drop echo'); return;
-    }
-
-    t.messages.push({from:p.from||'them', text:incoming, at:p.at||now});
-    t.lastAt = now;
-
-    // Merge evtl. vorhandenen Hint-Thread für Profil+Name
-    const hint = findThreadByName(t.profile, t.customer);
-    if (hint && hint._hint && hint.threadId !== t.threadId) {
-      for (const m of hint.messages) { t.messages.push(m); }
-      t.unread = (t.unread||0) + (hint.unread||0);
-      t.lastAt = Math.max(t.lastAt||0, hint.lastAt||0);
-      store.threads.delete(hint.threadId);
-    }
-
-    if (!store.selected) {
-      select(tid);
-      return;
-    }
-
-    if (store.selected !== tid) {
-      t.unread = (t.unread||0) + 1;
-      store.unreadAll++;
-      renderQueue();
-    } else {
-      renderQueue();
-      renderChat();
-    }
-    return;
+  if (data.type === 'send-result') {
+    // Optional: Erfolg/Fehler anzeigen
   }
 });
 
-/* ===== Scroll bottom on resize ===== */
-window.addEventListener('resize', ()=>{ const t=store.threads.get(store.selected); if(t) el.chat.scrollTop=el.chat.scrollHeight; });
+// Controls
+$("#send").onclick = () => {
+  if (!activeMsg) return alert("Kein Eintrag aktiv.");
+  const t = $("#reply").value.trim();
+  if (!t) return;
+  const tab = tabs.get(activeMsg.tabId);
+  tab.win.postMessage({ type:'send-text', convId: activeMsg.convId, text: t }, tab.origin);
+};
+
+$("#next").onclick = () => {
+  tabs.forEach(tab => tab.win.postMessage({ type:'open-next-unread' }, tab.origin));
+};
+
+$("#autoNext").onchange = (e) => {
+  const enabled = e.target.checked;
+  tabs.forEach(tab => tab.win.postMessage({ type:'toggle-autonext', enabled }, tab.origin));
+};
 </script>
 </body>
 </html>
