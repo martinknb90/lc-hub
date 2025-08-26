@@ -1,77 +1,115 @@
 <!doctype html>
-<html>
+<html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <title>LC Hub</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body{font-family:system-ui, sans-serif;margin:16px}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    .col{flex:1 1 360px;border:1px solid #e6e6e6;border-radius:12px;padding:10px}
-    #tabs>div{font-size:13px;padding:4px 6px;border-bottom:1px dashed #eee}
-    .inbox-item{padding:8px;border-bottom:1px dashed #eee;cursor:pointer}
-    .badge{background:#eee;padding:2px 6px;border-radius:999px;font-size:12px}
-    .thread{height:48vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:8px;background:#fafafa}
-    .bubble{margin:6px 0;padding:8px 10px;border-radius:10px;max-width:85%}
-    .from-user{background:#fff;border:1px solid #ddd}
-    .from-me{background:#e8fff2;border:1px solid #bfe8cc;margin-left:auto}
-    textarea{width:100%;height:90px}
-    button{border:none;border-radius:8px;padding:8px 12px;cursor:pointer}
-    #send{background:#0a7;color:#fff} #next{background:#ddd}
-    #log{white-space:pre-wrap;font-size:12px;background:#f8f8f8;border:1px solid #eee;padding:8px;border-radius:8px;height:120px;overflow:auto}
-  </style>
+<meta charset="utf-8">
+<title>LC Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#0d1117; --panel:#0f1520; --panel2:#0b1220; --line:#1c2332;
+  --text:#e6edff; --muted:#a7b3cc; --accent:#6aa3ff; --ok:#29d391; --warn:#f2b94b;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:#0e1421;position:sticky;top:0;z-index:10}
+h1{font-size:16px;margin:0 8px 0 0;letter-spacing:.2px}
+.chip{background:#121a2a;border:1px solid var(--line);color:var(--muted);padding:4px 10px;border-radius:999px}
+.toolbar{margin-left:auto;display:flex;gap:10px;align-items:center}
+.tbtn{display:flex;gap:8px;align-items:center;background:#121a2a;border:1px solid var(--line);padding:6px 10px;border-radius:10px;color:var(--muted);cursor:pointer}
+.tbtn input{accent-color:var(--accent)}
+.wrap{display:grid;grid-template-columns:280px 1fr 330px;gap:12px;padding:12px;height:calc(100vh - 54px)}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+.col h3{margin:10px 12px 6px;color:var(--muted);font-size:12px;letter-spacing:.3px;text-transform:uppercase}
+.scroll{overflow:auto;padding:8px}
+.badge{background:#18233a;border:1px solid var(--line);color:#c7d3ec;border-radius:999px;padding:2px 8px;font-size:12px}
+.item{padding:10px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;margin:8px;cursor:pointer}
+.item:hover{outline:1px solid #223049}
+.meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+.center{display:flex;flex-direction:column}
+#thread{flex:1;overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel2);margin:8px;border-radius:10px;padding:10px}
+.bubble{max-width:85%;padding:10px 12px;border-radius:12px;margin:6px 0;border:1px solid var(--line);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.me{background:#10261a;border-color:#1f5c3f;margin-left:auto}
+.user{background:#141e30}
+.headbar{display:flex;align-items:center;gap:8px;padding:8px 10px}
+.headbar .x{margin-left:auto;background:#18233a;border:1px solid var(--line);color:#cfe1ff;border-radius:8px;padding:6px 10px;cursor:pointer}
+.compose{display:flex;gap:8px;padding:8px;border-top:1px solid var(--line)}
+textarea{flex:1;resize:none;background:#0b121e;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px;height:44px}
+button.primary{background:var(--accent);color:#081223;border:none;border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer}
+.sidekv{display:grid;grid-template-columns:1fr auto;gap:6px}
+.k{color:var(--muted)}
+.v{color:#cfe1ff}
+#log{display:none;background:#0a0f1a;border:1px solid var(--line);border-radius:10px;margin:10px;padding:8px;height:120px;overflow:auto;font-size:12px;color:#9fb0d2}
+</style>
 </head>
 <body>
+<header>
   <h1>LC Hub</h1>
-  <div style="margin:8px 0 14px;font-size:14px">
-    Verbindungen: <b id="conn">0</b> &nbsp;|&nbsp;
-    <label><input type="checkbox" id="autonext"> Auto-Next</label>
+  <span class="chip">Verbindungen: <b id="conn">0</b></span>
+  <span class="chip">Ungelesen: <b id="unread">0</b></span>
+  <div class="toolbar">
+    <label class="tbtn"><input id="tAutonext" type="checkbox" checked> Auto-Next</label>
+    <label class="tbtn"><input id="tAutoclose" type="checkbox" checked> Auto-Schließen</label>
+    <label class="tbtn"><input id="tSound" type="checkbox" checked> Sound</label>
+    <label class="tbtn"><input id="tDebug" type="checkbox"> Debug</label>
   </div>
+</header>
 
-  <div class="row">
-    <div class="col">
-      <h3>Verb. Tabs</h3>
-      <div id="tabs"></div>
-    </div>
-    <div class="col">
-      <h3>Eingang</h3>
-      <div id="inbox"></div>
-    </div>
-    <div class="col">
-      <h3>Thread</h3>
-      <div id="active">Aktiv: –</div>
-      <div id="thread" class="thread"></div>
-      <textarea id="reply" placeholder="Antwort…"></textarea>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button id="send">Senden</button>
-        <button id="next">Nächster</button>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+  <!-- Eingang -->
+  <section class="col">
+    <h3>Eingang</h3>
+    <div id="inbox" class="scroll"></div>
+  </section>
 
-  <h3>Log</h3>
-  <div id="log"></div>
+  <!-- Chat -->
+  <section class="col center">
+    <div class="headbar">
+      <div id="title">–</div>
+      <button id="btnClose" class="x">×</button>
+    </div>
+    <div id="thread"></div>
+    <div class="compose">
+      <textarea id="reply" placeholder="Antwort schreiben… (Enter = senden, Shift+Enter = Zeilenumbruch)"></textarea>
+      <button id="send" class="primary">Senden</button>
+    </div>
+  </section>
+
+  <!-- Details -->
+  <section class="col">
+    <h3>Details</h3>
+    <div class="scroll">
+      <div class="sidekv"><div class="k">Profil</div><div id="dProfile" class="v">–</div></div>
+      <div class="sidekv"><div class="k">Kunde</div><div id="dCustomer" class="v">–</div></div>
+      <div class="sidekv"><div class="k">Thread-ID</div><div id="dThread" class="v">–</div></div>
+      <div class="sidekv"><div class="k">Quelle</div><div id="dSource" class="v">–</div></div>
+    </div>
+
+    <h3>Debug</h3>
+    <pre id="log"></pre>
+  </section>
+</div>
+
+<audio id="ding" preload="auto"><source src="data:audio/mpeg;base64,//uQZAAAAAAAAAAAAAAAAAAAA..." type="audio/mpeg"></audio>
 
 <script>
-const tabs = new Map(); // tabId -> { profileName, win, origin }
-const inbox = [];       // {tabId, profile, convId, preview, ts}
-let active = null;      // {tabId, convId, profile}
+const tabs = new Map(); // tabId -> { win, origin, profile }
+const inbox = [];       // {tabId, convId, profile, customer, text, ts}
+let active = null;      // {tabId, convId, profile, customer}
+let unread = 0;
 
 const $ = s => document.querySelector(s);
-function log(...a){ const el=$("#log"); el.textContent += a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')+"\n"; el.scrollTop=el.scrollHeight; }
+const logEl = $("#log");
+function log(...a){ if(!$("#tDebug").checked) return; logEl.textContent += a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')+"\\n"; logEl.scrollTop=logEl.scrollHeight; }
+function bumpUnread(n=1){ unread+=n; $("#unread").textContent=String(unread); }
+function decUnread(){ if(unread>0){ unread--; $("#unread").textContent=String(unread); } }
 
-function renderTabs(){
-  const el=$("#tabs"); el.innerHTML="";
-  tabs.forEach((v,k)=>{ const d=document.createElement('div'); d.textContent=`${v.profileName} (${k.slice(0,5)}…)`; el.appendChild(d); });
-  $("#conn").textContent=String(tabs.size);
-}
 function renderInbox(){
   const el=$("#inbox"); el.innerHTML="";
-  inbox.slice().reverse().forEach(m=>{
-    const d=document.createElement('div');
-    d.className='inbox-item';
-    d.innerHTML=`<div><span class="badge">${m.profile}</span> <b>${m.convId}</b></div><div>${m.preview}</div><div style="font-size:11px;opacity:.6">${new Date(m.ts).toLocaleTimeString()}</div>`;
-    d.onclick=()=>openThread(m.tabId, m.convId, m.profile);
+  [...inbox].slice().reverse().forEach(m=>{
+    const d=document.createElement('div'); d.className='item';
+    d.innerHTML = \`<div class="meta"><span class="badge">\${m.profile}</span> · <b>\${m.customer||m.convId}</b> · \${new Date(m.ts).toLocaleTimeString()}</div>\`
+                 + \`<div>\${m.text}</div>\`;
+    d.onclick=()=>openThread(m);
     el.appendChild(d);
   });
 }
@@ -79,61 +117,77 @@ function renderThread(list=[]){
   const el=$("#thread"); el.innerHTML="";
   list.forEach(msg=>{
     const b=document.createElement('div');
-    b.className='bubble '+(msg.from==='me'?'from-me':'from-user');
+    b.className='bubble '+(msg.from==='me'?'me':'user');
     b.textContent=msg.text;
     el.appendChild(b);
   });
   el.scrollTop=el.scrollHeight;
-  $("#active").textContent = active ? `Aktiv: ${active.profile} / ${active.convId}` : 'Aktiv: –';
+}
+function setDetails(meta){
+  $("#dProfile").textContent = meta?.profile || '–';
+  $("#dCustomer").textContent = meta?.customer || '–';
+  $("#dThread").textContent = meta?.convId || '–';
+  $("#dSource").textContent = meta?.source || '–';
+  $("#title").textContent = meta ? \`\${meta.profile} · \${meta.customer||meta.convId}\` : '–';
 }
 
-function openThread(tabId, convId, profile){
-  active = { tabId, convId, profile };
-  const t = tabs.get(tabId); if (!t) return;
-  // 1) im Tab öffnen
-  t.win.postMessage({ type:'open-conv', convId }, t.origin);
-  // 2) Thread anfordern
-  t.win.postMessage({ type:'request-thread', convId }, t.origin);
+function openThread(m){
+  active = { tabId:m.tabId, convId:m.convId, profile:m.profile, customer:m.customer, source:m.source };
+  setDetails(active);
+  const t = tabs.get(m.tabId); if(!t) return;
+  // Thread anfordern & (optional) in LC öffnen
+  t.win.postMessage({ type:'request-thread', convId:m.convId }, t.origin);
+  decUnread();
 }
+$("#btnClose").onclick = ()=>{ active=null; setDetails(null); $("#thread").innerHTML=''; };
 
 window.addEventListener("message", ev=>{
   const data = ev.data || {};
   log("[Hub<-]", ev.origin, data);
+
   if (data.type==='hello' && data.source==='lc-tab'){
-    tabs.set(data.tabId, { profileName:data.profileName, win:ev.source, origin:ev.origin });
+    tabs.set(data.tabId, { win:ev.source, origin:ev.origin, profile:data.profileName });
     ev.source.postMessage({ type:'hello-ack' }, ev.origin);
-    renderTabs(); return;
+    $("#conn").textContent = String(tabs.size);
+    return;
   }
   if (data.type==='incoming'){
-    // in Inbox aufnehmen
-    (data.messages||[]).forEach(m=>{
-      if (m.from==='user'){
-        inbox.push({ tabId:data.tabId, profile:data.profileName, convId:data.convId, preview:m.text, ts:data.ts });
+    // jede user-Message in die Inbox
+    (data.messages||[]).forEach(msg=>{
+      if (msg.from==='user'){
+        inbox.push({ tabId:data.tabId, convId:data.convId, profile:data.profileName, customer:msg.customer||'', text:msg.text, ts:data.ts, source:data.source||'' });
+        bumpUnread(1);
+        if ($("#tSound").checked) { try { $("#ding").play(); } catch(e){} }
       }
     });
     renderInbox(); return;
   }
   if (data.type==='thread-snapshot'){
-    // kompletter Verlauf
-    if (active && data.convId===active.convId && data.tabId===active.tabId){
+    if (active && data.tabId===active.tabId){
+      setDetails({ ...active, convId:data.convId });
       renderThread(data.messages||[]);
     }
     return;
   }
   if (data.type==='send-result'){
-    // optional anzeigen
+    log('[send-result]', data);
+    if (data.ok && $("#tAutoclose").checked) { $("#btnClose").click(); }
   }
 });
 
 $("#send").onclick = ()=>{
-  if (!active) return alert("Kein Chat aktiv");
-  const t = $("#reply").value.trim(); if (!t) return;
-  const tab = tabs.get(active.tabId); if (!tab) return;
+  if (!active) return alert('Kein Chat aktiv');
+  const t = $("#reply").value.trim(); if(!t) return;
+  const tab = tabs.get(active.tabId); if(!tab) return;
   tab.win.postMessage({ type:'send-text', convId:active.convId, text:t }, tab.origin);
-  $("#reply").value="";
+  $("#reply").value = "";
+  setTimeout(()=> tab.win.postMessage({ type:'request-thread', convId:active.convId }, tab.origin), 250);
 };
-$("#next").onclick = ()=>{ tabs.forEach(t => t.win.postMessage({ type:'open-next-unread' }, t.origin)); };
-$("#autonext").onchange = e => { const en = e.target.checked; tabs.forEach(t => t.win.postMessage({ type:'toggle-autonext', enabled:en }, t.origin)); };
+$("#reply").addEventListener('keydown', e=>{
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $("#send").click(); }
+});
+$("#tAutonext").onchange = e => { const en=e.target.checked; tabs.forEach(t => t.win.postMessage({ type:'toggle-autonext', enabled:en }, t.origin)); };
+$("#next").onclick = ()=> { tabs.forEach(t => t.win.postMessage({ type:'open-next-unread' }, t.origin)); };
 </script>
 </body>
 </html>
