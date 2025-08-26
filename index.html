@@ -78,15 +78,15 @@ function setActive(m){
   $("#active").textContent = `Aktiv: ${m.profile} / ${m.convId}`;
 }
 
+// <<< DAS WICHTIGE FIX >>> 
+// Immer auf HELLO reagieren und hello-ack zurückschicken
 window.addEventListener("message", ev => {
-  // DEBUG: erst mal alle Origins akzeptieren, später härten auf erwartete Domains
   const data = ev.data || {};
   console.log('[Hub] from', ev.origin, data);
 
   if (data.type === 'hello' && data.source === 'lc-tab') {
     tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
-    // ACK an GENAU den Ursprung zurück
-    ev.source.postMessage({ type:'hello-ack' }, ev.origin);
+    ev.source.postMessage({ type:'hello-ack' }, ev.origin); // <-- ACK senden
     renderTabs();
     return;
   }
@@ -99,7 +99,9 @@ window.addEventListener("message", ev => {
     renderInbox();
     return;
   }
-  // optional: weitere Typen
+  if (data.type === 'send-result') {
+    console.log('[Hub] SendResult', data);
+  }
 });
 
 $("#send").onclick = () => {
