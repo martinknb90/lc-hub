@@ -20,7 +20,10 @@
 </head>
 <body>
   <h1>LC Hub</h1>
-  <label><input type="checkbox" id="autonext"> Auto-Next</label>
+  <div style="margin:8px 0; font-size:14px">
+    Verbindungen: <b id="conn">0</b> &nbsp;|&nbsp;
+    <label><input type="checkbox" id="autonext"> Auto-Next</label>
+  </div>
 
   <div class="row">
     <div class="col">
@@ -44,10 +47,11 @@
 
 <script>
 const tabs = new Map(); // tabId -> { profileName, win, origin }
-const inbox = [];       // items pushed from tabs
+const inbox = [];
 let activeMsg = null;
 
 const $ = s => document.querySelector(s);
+
 function renderTabs(){
   const el = $("#tabs"); el.innerHTML = "";
   tabs.forEach((v,k)=>{
@@ -55,6 +59,7 @@ function renderTabs(){
     d.textContent = `${v.profileName} (${k.slice(0,5)}…)`;
     el.appendChild(d);
   });
+  $("#conn").textContent = String(tabs.size);
 }
 function renderInbox(){
   const el = $("#inbox"); el.innerHTML = "";
@@ -74,10 +79,13 @@ function setActive(m){
 }
 
 window.addEventListener("message", ev => {
+  // DEBUG: erst mal alle Origins akzeptieren, später härten auf erwartete Domains
   const data = ev.data || {};
-  // Minimaler, sicherer Flow: immer an den *genauen* Ursprung antworten
+  console.log('[Hub] from', ev.origin, data);
+
   if (data.type === 'hello' && data.source === 'lc-tab') {
     tabs.set(data.tabId, { profileName: data.profileName, win: ev.source, origin: ev.origin });
+    // ACK an GENAU den Ursprung zurück
     ev.source.postMessage({ type:'hello-ack' }, ev.origin);
     renderTabs();
     return;
@@ -91,7 +99,7 @@ window.addEventListener("message", ev => {
     renderInbox();
     return;
   }
-  // optional: list-snapshot, thread-snapshot, send-result etc.
+  // optional: weitere Typen
 });
 
 $("#send").onclick = () => {
